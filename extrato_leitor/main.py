@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+import os
 import re
-from pandas import DataFrame
+from pandas import DataFrame, concat
 from PyPDF2 import PdfReader
 from typing import Union
 
 START_PAGE=3
+VERSION=0.1
 
 def _token_replace(list_tokens):
     return [ re.sub('( \n)+','\t', row) for row in list_tokens ]
@@ -61,11 +63,10 @@ def parse_table(pdf_reader: PdfReader) -> DataFrame:
     
     return extrato_df
 
-if __name__ == "__main__":
 
-    VERSION=0.1
-    FILEPATH='faturas/fatura.pdf'
+def _single_():
     
+    FILEPATH='faturas/fatura.pdf'
     
     print(f"Leitor de Extratos - {VERSION}")
 
@@ -83,3 +84,50 @@ if __name__ == "__main__":
     print(f"Tabela gerada: {extrato_df.shape[0]} linhas obtidas")
 
     extrato_df.to_csv(f'{new_file_path.replace(".pdf","")}_extracted.csv', sep=';', index=False)
+
+
+def batch_process():
+    """ Método para executar e consolidar extratos em lote.
+    """
+
+    VERSION=0.2
+    DEFAULT_DIR = './faturas/nubank/'
+    NOME_SAIDA= 'faturas_nubank.csv'
+
+
+    print(f"Leitor de Extratos - {VERSION}")
+
+    files_list = sorted(list(map(lambda x: re.findall('(\w+\.pdf)', x)[0], os.listdir(DEFAULT_DIR))))
+
+    registry = dict()
+    lines = 0
+    for name in files_list:
+        pdf_reader = PdfReader(os.path.join(DEFAULT_DIR, name))
+        extrato_df = parse_table(pdf_reader)
+        lines += extrato_df.shape[0]
+        registry[name.strip('.pdf')] = extrato_df
+        print(f'Arquivo {name} processado com sucesso!')
+
+    print(f'Consolidando arquivos: {files_list} -  Totalizando {lines} linhas')
+
+    df_consolidado = concat([v for _, v in registry.items()])
+
+    print(f"Tabela gerada: {df_consolidado.shape[0]} linhas obtidas")
+
+    df_consolidado.to_csv(f'{NOME_SAIDA}', sep=';', index=False)
+
+if __name__ == "__main__":
+
+    escolha = input(""" Escolha uma opção:
+          1. Processar um arquivo.
+          2. Processar arquivos em um diretório (batch).
+          """)
+    
+    print(f'Opcao {escolha}!')
+    
+    if escolha == '1':
+        _single_()
+    elif escolha == '2':
+        batch_process()
+    else:
+        print("Opção inválida!")
