@@ -5,6 +5,8 @@ from pandas import DataFrame
 from PyPDF2 import PdfReader
 from typing import Union
 
+START_PAGE=3
+
 def _token_replace(list_tokens):
     return [ re.sub('( \n)+','\t', row) for row in list_tokens ]
 
@@ -63,7 +65,7 @@ if __name__ == "__main__":
 
     VERSION=0.1
     FILEPATH='faturas/fatura.pdf'
-    START_PAGE=3
+    
     
     print(f"Leitor de Extratos - {VERSION}")
 
